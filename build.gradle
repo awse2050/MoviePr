@@ -34,6 +34,9 @@ dependencies {
     testAnnotationProcessor 'org.projectlombok:lombok'
 // thymeleaf 사용시 Time format설정
     compile group: 'org.thymeleaf.extras', name: 'thymeleaf-extras-java8time'
+    // 섬네일 라이브러리
+    implementation group: 'net.coobird', name: 'thumbnailator', version: '0.4.13'
+
 }
 
 test {
