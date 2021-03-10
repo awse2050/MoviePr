@@ -26,7 +26,7 @@
         </div>
         <div class="uploadResult">
             <ul>
-                <li th:each="movieImage : ${dto.imageDTOList}">
+                <li th:each="movieImage : ${dto.imageDTOList}" th:data-file="${movieImage.getThumbnailUrl()}">
                     <img th:if="${movieImage.path != null}"
                        th:src="|/display?fileName=${movieImage.getThumbnailUrl()}|" >
                 </li>
@@ -94,7 +94,7 @@
 
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" >Close</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
@@ -109,6 +109,8 @@
                 var reviewModal = $(".reviewModal");
                 var inputMid = $('input[name="mid"]');
                 var inputText = $("input[name='text']");
+
+                var reviewnum;
 
                 var grade = 0 ;
                 var mno = [[${dto.mno}]];
@@ -154,6 +156,99 @@
                     reviewModal.modal("hide");
                 })
 
+                function getMovieReviews() {
+
+                    function formatTime(str) {
+                        var date = new Date(str);
+
+                        return date.getFullYear() + '/' + (date.getMonth() + 1)+ '/' +
+                            date.getDate() + ' ' +
+                            date.getHours() + ':' +
+                            date.getMinutes();
+                    }
+
+                    $.getJSON("/reviews/"+mno+"/all", function (arr) {
+                        var str = "";
+                        $.each(arr, function(i, review) {
+                            console.log(review);
+
+                            str += ' <div class="card-body" data-reviewnum='+review.reviewnum+' data-mid='+review.mid+'>';
+                            str += ' <h5 class="card-title">'+review.text+' <span>'+review.grade+'</span></h5>';
+                            str += ' <h6 class="card-subtitle mb-2 text-muted">'+review.nickname+'</h6>';
+                            str += ' <p class="cart-text">'+formatTime(review.regDate)+'</p>';
+                            str += '</div>';
+                        })
+                        $(".reviewList").html(str);
+                    })
+                }
+                getMovieReviews();
+
+                $(".reviewList").on("click", ".card-body" , function() {
+                    $(".addBtn").hide();
+                    $(".removeBtn, .modifyBtn").show();
+
+                    var targetReview= $(this);
+
+                    reviewnum = targetReview.data("reviewnum");
+                    console.log(reviewnum);
+
+                    inputMid.val(targetReview.data("mid"));
+                    inputText.val(targetReview.find('.card-title').clone().children().remove().end().text());
+
+                    var grade = targetReview.find(".card-title span").html();
+                    $(".starrr a:nth-child("+grade+")").trigger("click");
+
+                    $(".reviewModal").modal("show");
+
+                })
+
+                $(".modifyBtn").on("click", function() {
+
+                    var data = {reviewnum: reviewnum , mno: mno, grade: grade, text: inputText.val(), mid: inputMid.val()};
+                    console.log(data);
+
+                    $.ajax({
+                        type: "put",
+                        url: "/reviews/"+mno+"/"+reviewnum,
+                        data: JSON.stringify(data),
+                        dataType: 'text',
+                        contentType: "application/json; charset=utf-8",
+                        success: function(result) {
+                            console.log("result : " + result);
+                            self.location.reload();
+                        }
+                    }); // ajax
+                    reviewModal.modal('hide');
+                })// modifyBtn
+
+                $(".removeBtn").on("click", function() {
+                    var data = {reviewnum: reviewnum}
+
+                    console.log(data);
+
+                    $.ajax({
+                        url: "/reviews/"+mno+"/"+reviewnum,
+                        type: "delete",
+                        contentType: "application/json charset=utf-8",
+                        dataType: 'text',
+                        success: function(result) {
+                            console.log("result : " + result);
+                            self.location.reload();
+                        }
+                    })
+                    reviewModal.modal('hide');
+                })
+
+                $(".uploadResult li").click(function() {
+
+                    var file = $(this).data("file");
+
+                    console.log(file);
+
+                    $(".imageModal .modal-body").html("<img style='width: 100%' src='/display?fileName="+file+"&size=1'>");
+                    $(".imageModal").modal("show");
+
+                })
 
             })
         </script>
