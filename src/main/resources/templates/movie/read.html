@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:replace="~{/layout/basic :: setContent(~{:: content})}">
+
+    <th:block th:fragment="content">
+
+        <h1 class="mt-4">movie Read Page</h1>
+
+        <div class="form-group">
+            <label>Title</label>
+            <input type="text" class="form-control" name="title" th:value="${dto.title}" readonly>
+        </div>
+        <div class="form-group">
+            <label>Review Count</label>
+            <textarea class="form-control" name="reviewCnt" rows="5" readonly>[[${dto.reviewCnt}]]</textarea>
+        </div>
+        <div class="form-group">
+            <label>Avg</label>
+            <input type="text" class="form-control" name="avg" th:value="${dto.avg}" readonly>
+        </div>
+        <div class="form-group">
+            <label>RegDate</label>
+            <input type="text" class="form-control" name="regDate"
+                   th:value="${#temporals.format(dto.regDate, 'yyyy-MM-dd HH:mm:ss')}" readonly>
+        </div>
+        <div class="uploadResult">
+            <ul>
+                <li th:each="movieImage : ${dto.imageDTOList}">
+                    <img th:if="${movieImage.path != null}"
+                       th:src="|/display?fileName=${movieImage.getThumbnailUrl()}|" >
+                </li>
+            </ul>
+        </div>
+
+        <button class="btn btn-primary">
+            Review Count <span class="badge badge-light">
+            [[${dto.reviewCnt}]]
+            </span>
+        </button>
+
+        <button class="btn btn-info addReviewBtn">
+            Review Register
+        </button>
+
+        <div class="list-group reviewList">
+
+        </div>
+
+
+        <div class="reviewModal modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Movie Review</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Reviewer ID</label>
+                            <input type="text" class="form-control" name="mid" >
+                        </div>
+                        <div class="form-group">
+                            <label>Grade <span class="grade"></span></label>
+                            <div class="starrr"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Review Text</label>
+                            <input class="form-control" type="text" name="text">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary addBtn">Save changes</button>
+                        <button type="button" class="btn btn-secondary closeBtn" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-warning modifyBtn">MOdify</button>
+                        <button type="button" class="btn btn-danger removeBtn">REmove</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="imageModal modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Picture</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" >Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script th:src="@{/starrr.js}"></script>
+        <link th:href="@{/css/starrr.css}" rel="stylesheet">
+        <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/css/font-awesome.min.css">
+
+        <script th:inline="javascript">
+            $(document).ready(function(e) {
+                var reviewModal = $(".reviewModal");
+                var inputMid = $('input[name="mid"]');
+                var inputText = $("input[name='text']");
+
+                var grade = 0 ;
+                var mno = [[${dto.mno}]];
+
+                $(".starrr").starrr({
+                    rating: grade,
+                    change: function(e, value) {
+                        if(value) {
+                            console.log(value);
+                            grade = value;
+                        }
+                    }
+                });
+
+                $(".addReviewBtn").on("click" ,function(e) {
+
+                    inputMid.val("");
+                    inputText.val("");
+
+                    $(".removeBtn, .modifyBtn").hide();
+                    $(".addBtn").show();
+
+                    reviewModal.modal('show');
+                })
+
+                $(".addBtn").on("click", function(e) {
+
+                    var data = {mno: mno, grade:grade, text: inputText.val(), mid: inputMid.val()};
+                    console.log(data);
+
+                    $.ajax({
+                        type: 'post',
+                        url: '/reviews/'+mno,
+                        data: JSON.stringify(data),
+                        contentType: "application/json; charset=utf-8",
+                        dataType: 'text',
+                        success: function(result) {
+                            console.log("result : ", result);
+
+                            self.location.reload();
+                        }
+                    })
+                    reviewModal.modal("hide");
+                })
+
+
+            })
+        </script>
+
+    </th:block>
+
+
+</th:block>

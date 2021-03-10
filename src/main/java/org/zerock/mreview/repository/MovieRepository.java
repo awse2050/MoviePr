@@ -11,7 +11,7 @@ import java.util.List;
 public interface MovieRepository extends JpaRepository<Movie, Long> {
     // 평점이 없는 데이터가 있을수 있으므로 coalesce를 사용해서 영화의 평점을 가져옴
 //    @Query("select m, avg(coalesce(r.grade, 0)), count(distinct r) from Movie m left outer join Review r on r.movie = m group by m" )
-    @Query("select m , mi , avg(coalesce(r.grade, 0)), count(distinct r) from Movie m left outer join MovieImage mi on mi.movie = m "+
+    @Query("select m , mi , avg(coalesce(r.grade, 0)), count(r) from Movie m left outer join MovieImage mi on mi.movie = m "+
             "left outer join Review r on r.movie = m group by m ")
     Page<Object[]> getListPage(Pageable pageable);
 

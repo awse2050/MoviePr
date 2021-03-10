@@ -2,6 +2,8 @@ package org.zerock.mreview.service;
 
 import org.zerock.mreview.dto.MovieDTO;
 import org.zerock.mreview.dto.MovieImageDTO;
+import org.zerock.mreview.dto.PageRequestDTO;
+import org.zerock.mreview.dto.PageResultDTO;
 import org.zerock.mreview.entity.Movie;
 import org.zerock.mreview.entity.MovieImage;
 
@@ -13,6 +15,11 @@ import java.util.stream.Collectors;
 public interface MovieService {
 
     public Long register(MovieDTO movieDTO);
+
+    //목록처리
+    public PageResultDTO<MovieDTO, Object[]> getList(PageRequestDTO requestDTO);
+
+    public MovieDTO getMoive(Long mno);
 
     default Map<String, Object> dtoToEntity(MovieDTO movieDTO) {
         // 객체를 담을 Map을 생성
@@ -43,4 +50,31 @@ public interface MovieService {
 
         return entityMap;
     }
+
+    default MovieDTO entityToDto(Movie movie, List<MovieImage> movieImages, Double avg, Long reviewCnt) {
+
+        MovieDTO movieDTO = MovieDTO.builder()
+                .mno(movie.getMno())
+                .title(movie.getTitle())
+                .regDate(movie.getRegDate())
+                .modDate(movie.getModDate())
+                .avg(avg)
+                .reviewCnt(reviewCnt.intValue())
+                .build();
+
+        List<MovieImageDTO> imageDTOList = movieImages.stream().map(movieImage -> {
+
+            MovieImageDTO movieImageDTO = MovieImageDTO.builder()
+                    .path(movieImage.getPath())
+                    .imgName(movieImage.getImgName())
+                    .uuid(movieImage.getUuid())
+                    .build();
+            return movieImageDTO;
+
+        }).collect(Collectors.toList());
+
+        movieDTO.setImageDTOList(imageDTOList);
+        return movieDTO;
+    }
+
 }

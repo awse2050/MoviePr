@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:replace="~{/layout/basic :: setContent(~{this :: content})}">
+
+    <th:block th:fragment="content">
+
+        <h1 class="mt-4">Movie Register page </h1>
+
+        <form th:action="@{/movie/register}" th:method="post">
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" class="form-control" name="title">
+            </div>
+
+            <div class="form-group fileForm">
+                <label>Image Files</label>
+                <div class="custom-file">
+                    <input type="file" class="custom-file-input files" id="fileInput" multiple>
+                    <label class="custom-file-label" data-browse="Browse"></label>
+                </div>
+            </div>
+
+            <div class="box">
+
+            </div>
+            <button class="btn btn-primary">submit</button>
+        </form>
+
+        <div class="uploadResult">
+            <ul>
+
+            </ul>
+        </div>
+
+        <script>
+            $(document).ready(function() {
+                var regex = new RegExp("(.*?)\.(exe|sh|zip|alz|tiff)$");
+                var maxSize = 10485760;
+
+                $(".custom-file-input").on("change", function() {
+
+                    var fileName = $(this).val().split("\\").pop();
+                    console.log("fileName : ", fileName);
+
+                    $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+
+                    var formData = new FormData();
+
+                    var fileInput = $(this);
+
+                    var files = fileInput[0].files;
+
+                    var appended = false;
+
+                    for(var i = 0 ; i < files.length; i++) {
+                        if(!checkExtension(files[i].name, files[i].size)) {
+                            return false;
+                        }
+                        console.log(files[i]);
+                        formData.append("uploadFiles", files[i]);
+                        appended = true;
+                    }
+                    // 미업로드
+                    if(!appended) {
+                        return;
+                    }
+
+                    for(var value of formData.values()) {
+                        console.log(value);
+                    }
+                    $.ajax({
+                        url: '/uploadAjax',
+                        type: 'post',
+                        contentType: false,
+                        processData: false,
+                        data: formData,
+                        dataType: 'json',
+                        success: function(result) {
+                            console.log(result);
+                            showResult(result);
+                        },
+                        error: function(textStatus) {
+                            console.log(textStatus);
+                        }
+                    });
+                })
+
+                $(".uploadResult").on("click", "li button", function() {
+                    console.log("delete file");
+
+                    var targetFile = $(this).data("file");
+                    var targetLi = $(this).closest("li");
+
+                    $.ajax({
+                        url: "/removeFile",
+                        type: "post",
+                        data: {fileName: targetFile},
+                        dataType: 'text',
+                        success: function(result) {
+                            alert(result);
+                            targetLi.remove();
+                        }
+                    })
+                })
+
+                $(".btn-primary").on("click", function(e) {
+                    e.preventDefault();
+                    console.log("click");
+                    var str = "";
+
+                    $(".uploadResult li").each(function(i, obj) {
+
+                        var target = $(obj);
+
+                        str += "<input type='hidden' name='imageDTOList["+i+"].imgName' value='"+target.data('name')+"'>";
+                        str += "<input type='hidden' name='imageDTOList["+i+"].path' value='"+target.data('path')+"'>";
+                        str += "<input type='hidden' name='imageDTOList["+i+"].uuid' value='"+target.data('uuid')+"'>";
+
+                    });
+                    $(".box").html(str);
+                    $("form").submit();
+                })
+
+                function checkExtension(fileName, fileSize) {
+
+                    if(fileSize >= maxSize) {
+                        return false;
+                    }
+                    if(regex.test(fileName)) {
+                        return false;
+                    }
+                    return true;
+                }
+
+                function showResult(arr) {
+                    var uploadUL = $(".uploadResult ul");
+                    var str = "";
+
+                    $(arr).each(function(i, obj) {
+                        str += "<li data-name='"+obj.fileName+"' data-path='"+obj.folderPath+"' data-uuid='"+obj.uuid+"'>";
+                        str += "<div>";
+                        str += "<button data-file=\'"+obj.imageUrl+"\' ";
+                        str += "class='btn-warning btn-sm'>X</button><br>";
+                        str += "<img src='/display?fileName="+obj.thumbnailUrl + "'>";
+                        str += "</div></li>";
+                    });
+                    uploadUL.append(str);
+                }
+
+
+            })
+        </script>
+    </th:block>
+
+</th:block>
